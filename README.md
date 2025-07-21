@@ -12,9 +12,6 @@ eslgo was written from the ground up in idiomatic Go for use in our production p
 ```
 go get github.com/yosefkohan26/eslgo
 ```
-```
-github.com/yosefkohan26/eslgo v1.4.1
-```
 
 ## Overview
 - Inbound ESL Connection
