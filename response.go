@@ -27,6 +27,7 @@ const (
 	TypeAPIResponse = `api/response`
 	TypeAuthRequest = `auth/request`
 	TypeDisconnect  = `text/disconnect-notice`
+	TypeLogData     = `log/data`
 )
 
 // RawResponse This struct contains all response data from FreeSWITCH

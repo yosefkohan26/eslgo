@@ -39,3 +39,22 @@ func TestEvent_readPlainEvent(t *testing.T) {
 	assert.Nil(t, err)
 	wait.Wait()
 }
+
+const TestJSONEvent = `{
+	"Event-Name": "CHANNEL_CREATE",
+	"Core-UUID": "some-uuid",
+	"FreeSWITCH-Hostname": "freeswitch.local",
+	"Channel-State-Number": "2",
+	"Answer-State": "ringing",
+	"Unique-ID": "another-uuid"
+}`
+
+func TestEvent_readJSONEvent(t *testing.T) {
+	event, err := readJSONEvent([]byte(TestJSONEvent))
+	assert.NoError(t, err)
+	assert.NotNil(t, event)
+	assert.Equal(t, "CHANNEL_CREATE", event.GetName())
+	assert.Equal(t, "some-uuid", event.GetHeader("Core-UUID"))
+	assert.Equal(t, "2", event.GetHeader("Channel-State-Number"))
+	assert.Equal(t, "another-uuid", event.GetHeader("Unique-ID"))
+}

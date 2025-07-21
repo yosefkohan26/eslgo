@@ -31,6 +31,7 @@ type Conn struct {
 	runningContext       context.Context
 	stopFunc             func()
 	responseChannels     map[string]chan *RawResponse
+	logChannel           chan *LogEntry
 	responseChanMutex    sync.RWMutex
 	eventListenerLock    sync.RWMutex
 	eventListeners       map[string]map[string]EventListener
@@ -81,7 +82,9 @@ func newConnection(c net.Conn, outbound bool, opts Options) *Conn {
 			TypeEventJSON:   make(chan *RawResponse),
 			TypeAuthRequest: make(chan *RawResponse, 1), // Buffered to ensure we do not lose the initial auth request before we are setup to respond
 			TypeDisconnect:  make(chan *RawResponse),
+			TypeLogData:     make(chan *RawResponse),
 		},
+		logChannel:     make(chan *LogEntry),
 		runningContext: runningContext,
 		stopFunc:       stop,
 		eventListeners: make(map[string]map[string]EventListener),
@@ -91,7 +94,14 @@ func newConnection(c net.Conn, outbound bool, opts Options) *Conn {
 	}
 	go instance.receiveLoop()
 	go instance.eventLoop()
+	go instance.logLoop()
 	return instance
+}
+
+// LogChannel returns a read-only channel that receives FreeSWITCH log entries.
+// You must enable logging on the connection for this channel to receive data.
+func (c *Conn) LogChannel() <-chan *LogEntry {
+	return c.logChannel
 }
 
 // RegisterEventListener - Registers a new event listener for the specified channel UUID(or EventListenAll). Returns the registered listener ID used to remove it.
@@ -154,15 +164,13 @@ func (c *Conn) SendCommand(ctx context.Context, cmd command.Command) (*RawRespon
 	c.responseChanMutex.RLock()
 	defer c.responseChanMutex.RUnlock()
 	select {
-	case response := <-c.responseChannels[TypeReply]:
-		if response == nil {
-			// We only get nil here if the channel is closed
+	case response, ok := <-c.responseChannels[TypeReply]:
+		if !ok {
 			return nil, errors.New("connection closed")
 		}
 		return response, nil
-	case response := <-c.responseChannels[TypeAPIResponse]:
-		if response == nil {
-			// We only get nil here if the channel is closed
+	case response, ok := <-c.responseChannels[TypeAPIResponse]:
+		if !ok {
 			return nil, errors.New("connection closed")
 		}
 		return response, nil
@@ -192,10 +200,11 @@ func (c *Conn) close() {
 	c.stopFunc()
 	c.responseChanMutex.Lock()
 	defer c.responseChanMutex.Unlock()
-	for key, responseChan := range c.responseChannels {
+	for _, responseChan := range c.responseChannels {
 		close(responseChan)
-		delete(c.responseChannels, key)
 	}
+
+	close(c.logChannel)
 
 	// Close the connection only after we have the response channel lock and we have deleted all response channels to ensure we don't receive on a closed channel
 	_ = c.conn.Close()
@@ -243,28 +252,60 @@ func (c *Conn) callEventListener(event *Event) {
 	}
 }
 
+func (c *Conn) logLoop() {
+	for {
+		c.responseChanMutex.RLock()
+		select {
+		case raw, ok := <-c.responseChannels[TypeLogData]:
+			if !ok {
+				// Channel is closed, shutdown.
+				c.responseChanMutex.RUnlock()
+				return
+			}
+			c.responseChanMutex.RUnlock()
+
+			logEntry := &LogEntry{
+				Headers: raw.Headers,
+				Body:    raw.Body,
+			}
+
+			// Send the parsed log entry to the public channel.
+			// Use a select with the running context to avoid blocking forever on shutdown.
+			select {
+			case c.logChannel <- logEntry:
+			case <-c.runningContext.Done():
+				return
+			}
+
+		case <-c.runningContext.Done():
+			c.responseChanMutex.RUnlock()
+			return
+		}
+	}
+}
+
 func (c *Conn) eventLoop() {
 	for {
 		var event *Event
 		var err error
 		c.responseChanMutex.RLock()
 		select {
-		case raw := <-c.responseChannels[TypeEventPlain]:
-			if raw == nil {
+		case raw, ok := <-c.responseChannels[TypeEventPlain]:
+			if !ok {
 				// We only get nil here if the channel is closed
 				c.responseChanMutex.RUnlock()
 				return
 			}
 			event, err = readPlainEvent(raw.Body)
-		case raw := <-c.responseChannels[TypeEventXML]:
-			if raw == nil {
+		case raw, ok := <-c.responseChannels[TypeEventXML]:
+			if !ok {
 				// We only get nil here if the channel is closed
 				c.responseChanMutex.RUnlock()
 				return
 			}
 			event, err = readXMLEvent(raw.Body)
-		case raw := <-c.responseChannels[TypeEventJSON]:
-			if raw == nil {
+		case raw, ok := <-c.responseChannels[TypeEventJSON]:
+			if !ok {
 				// We only get nil here if the channel is closed
 				c.responseChanMutex.RUnlock()
 				return

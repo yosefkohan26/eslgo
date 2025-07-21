@@ -37,6 +37,24 @@ func (c *Conn) EnableEvents(ctx context.Context) error {
 	return err
 }
 
+// EnableLogs enables receiving log data from FreeSWITCH.
+// You can optionally specify a log level (0-7). If no level is provided, it defaults to 7 (DEBUG).
+func (c *Conn) EnableLogs(ctx context.Context, level ...int) (*RawResponse, error) {
+	logLevel := 7
+	if len(level) > 0 {
+		logLevel = level[0]
+	}
+	return c.SendCommand(ctx, command.Log{
+		Enabled: true,
+		Level:   logLevel,
+	})
+}
+
+// DisableLogs disables receiving log data from FreeSWITCH.
+func (c *Conn) DisableLogs(ctx context.Context) (*RawResponse, error) {
+	return c.SendCommand(ctx, command.Log{Enabled: false})
+}
+
 // DebugEvents - A helper that will output all events to a logger
 func (c *Conn) DebugEvents(w io.Writer) string {
 	logger := log.New(w, "EventLog: ", log.LstdFlags|log.Lmsgprefix)
@@ -108,6 +126,26 @@ func (c *Conn) WaitForDTMF(ctx context.Context, uuid string) (byte, error) {
 	case <-ctx.Done():
 		return 0, ctx.Err()
 	}
+}
+
+// GetVar - In an outbound connection, retrieves a channel variable from FreeSWITCH.
+func (c *Conn) GetVar(ctx context.Context, varName string) (string, error) {
+	if !c.outbound {
+		return "", errors.New("getvar command is only valid for outbound connections")
+	}
+	response, err := c.SendCommand(ctx, command.GetVar{VariableName: varName})
+	if err != nil {
+		return "", err
+	}
+	return response.GetReply(), nil
+}
+
+// Resume - In an outbound connection, tells FreeSWITCH to resume the dialplan execution.
+func (c *Conn) Resume(ctx context.Context) (*RawResponse, error) {
+	if !c.outbound {
+		return nil, errors.New("resume command is only valid for outbound connections")
+	}
+	return c.SendCommand(ctx, command.Resume{})
 }
 
 // Helper for mod_dptools apps since they are very similar in invocation

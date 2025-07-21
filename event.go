@@ -13,6 +13,7 @@ package eslgo
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/textproto"
@@ -66,11 +67,26 @@ func readXMLEvent(body []byte) (*Event, error) {
 	}, nil
 }
 
-// TODO: Needs processing
+// readJSONEvent parses a JSON formatted event into an Event struct.
 func readJSONEvent(body []byte) (*Event, error) {
-	return &Event{
-		Headers: make(textproto.MIMEHeader),
-	}, nil
+	var data map[string]interface{}
+	if err := json.Unmarshal(body, &data); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal json event: %w", err)
+	}
+
+	headers := make(textproto.MIMEHeader)
+	for key, value := range data {
+		// The textproto.MIMEHeader expects a slice of strings for each key.
+		// We'll format the value into a string.
+		headers[textproto.CanonicalMIMEHeaderKey(key)] = []string{fmt.Sprintf("%v", value)}
+	}
+
+	event := &Event{
+		Headers: headers,
+		Body:    body, // Keep the original body for reference
+	}
+
+	return event, nil
 }
 
 // GetName Helper function that returns the event name header
