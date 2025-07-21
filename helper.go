@@ -1,12 +1,12 @@
 /*
- * Copyright (c) 2020 Percipia
+ * Copyright (c) 2020 yosefkohan26
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * Contributor(s):
- * Andrew Querol <aquerol@percipia.com>
+ * Andrew Querol <aquerol@yosefkohan26.com>
  */
 package eslgo
 
@@ -18,8 +18,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/percipia/eslgo/command"
-	"github.com/percipia/eslgo/command/call"
+	"github.com/yosefkohan26/eslgo/command"
+	"github.com/yosefkohan26/eslgo/command/call"
 )
 
 func (c *Conn) EnableEvents(ctx context.Context) error {

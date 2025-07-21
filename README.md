@@ -1,19 +1,19 @@
 # eslgo
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/percipia/eslgo)](https://pkg.go.dev/github.com/percipia/eslgo)
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/percipia/eslgo/Go)
-[![Go Report Card](https://goreportcard.com/badge/github.com/percipia/eslgo)](https://goreportcard.com/report/github.com/percipia/eslgo)
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/percipia/eslgo.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/percipia/eslgo/alerts/)
-[![GitHub license](https://img.shields.io/github/license/percipia/eslgo)](https://github.com/percipia/eslgo/blob/v1/LICENSE)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/yosefkohan26/eslgo)](https://pkg.go.dev/github.com/yosefkohan26/eslgo)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/yosefkohan26/eslgo/Go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/yosefkohan26/eslgo)](https://goreportcard.com/report/github.com/yosefkohan26/eslgo)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/yosefkohan26/eslgo.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/yosefkohan26/eslgo/alerts/)
+[![GitHub license](https://img.shields.io/github/license/yosefkohan26/eslgo)](https://github.com/yosefkohan26/eslgo/blob/v1/LICENSE)
 
 eslgo is a [FreeSWITCH™](https://freeswitch.com/) ESL library for GoLang.
 eslgo was written from the ground up in idiomatic Go for use in our production products tested handling thousands of calls per second.
 
 ## Install
 ```
-go get github.com/percipia/eslgo
+go get github.com/yosefkohan26/eslgo
 ```
 ```
-github.com/percipia/eslgo v1.4.1
+github.com/yosefkohan26/eslgo v1.4.1
 ```
 
 ## Overview
@@ -42,7 +42,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/percipia/eslgo"
+	"github.com/yosefkohan26/eslgo"
 	"log"
 )
 
@@ -66,7 +66,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/percipia/eslgo"
+	"github.com/yosefkohan26/eslgo"
 	"time"
 )
 
